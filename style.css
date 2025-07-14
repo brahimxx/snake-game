@@ -1,0 +1,132 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Roboto";
+  color: white;
+  font-size: 22px;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.main_div {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5vh;
+  padding-bottom: 5vh; /* 5% vertical padding */
+  box-sizing: border-box;
+}
+
+.score_div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 90vw;
+  max-width: 700px;
+  background-color: rgb(57, 60, 80);
+  border-radius: 10px 10px 0px 0px;
+  box-sizing: border-box;
+}
+
+.score_div p {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+
+.game_board {
+  display: grid;
+  grid-template: repeat(30, 1fr) / repeat(30, 1fr);
+  width: 700px;
+  height: 700px;
+  background-color: rgb(34, 36, 49);
+  border-radius: 0px 0px 10px 10px;
+}
+
+.foodcase {
+  background-image: url("images/food.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.snakecase {
+  background-color: rgb(48, 170, 197);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: #fff;
+  color: black;
+  padding: 2em 3em;
+  border-radius: 8px;
+  text-align: center;
+}
+.modal.show {
+  display: flex;
+}
+
+/* Shake animation */
+@keyframes shake {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
+
+.shake {
+  animation: shake 0.5s;
+  animation-timing-function: ease-in-out;
+}
