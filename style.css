@@ -62,8 +62,25 @@ body {
   background-repeat: no-repeat;
 }
 
-.snakecase {
-  background-color: rgb(48, 170, 197);
+.head {
+  background-image: url("images/head.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tail {
+  background-image: url("images/tale.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.body {
+  background-image: url("images/body.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .modal {
@@ -129,4 +146,44 @@ body {
 .shake {
   animation: shake 0.5s;
   animation-timing-function: ease-in-out;
+}
+
+.head {
+  background-image: url("images/head.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tail {
+  background-image: url("images/tail.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.vertical {
+  background-image: url("images/body_v.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.horizontal {
+  background-image: url("images/body_h.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.corner {
+  background-image: url("images/body-corner.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.foodcase {
+  background-image: url("images/food.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

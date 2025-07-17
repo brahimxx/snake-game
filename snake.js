@@ -1,9 +1,39 @@
 // snake.js
+import { updateGridSize } from "./board.js";
+
 export class SnakeSegment {
   constructor(y, x) {
     this.y = y;
     this.x = x;
   }
+}
+
+// By = 15  Ay = 16
+// Ay - By = -1
+// By = 18  Ay = 1
+// Ay - By = -17
+
+export function getDirection(segA, segB) {
+  let gridRows = 0,
+    gridCols = 0;
+  gridRows = gridCols = updateGridSize();
+
+  if (!segA || !segB) return null;
+  // Y-axis (vertical movement)
+  if (segB.x === segA.x) {
+    let dy = segB.y - segA.y;
+    // Handle wrapping upwards
+    if (dy === 1 || dy === -(gridRows - 1)) return "up";
+    if (dy === -1 || dy === gridRows - 1) return "down";
+  }
+  // X-axis
+  else if (segB.y === segA.y) {
+    let dx = segB.x - segA.x;
+    // Handle wrapping left
+    if (dx === 1 || dx === -(gridCols - 1)) return "left";
+    if (dx === -1 || dx === gridCols - 1) return "right";
+  }
+  return null;
 }
 
 export class Snake {

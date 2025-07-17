@@ -20,8 +20,8 @@ playAgainBtn.addEventListener("click", () => {
 });
 
 const playBoard = document.querySelector(".game_board");
-let gridRows = 30,
-  gridCols = 30;
+let gridRows = 0,
+  gridCols = 0;
 let snake,
   food,
   score = 0,
