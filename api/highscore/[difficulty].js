@@ -1,4 +1,4 @@
-import { getHighestScore, setHighestScore } from "../../../storage.js";
+import { getHighestScore, setHighestScore } from "../../storage.js";
 
 export default async function handler(req, res) {
   try {

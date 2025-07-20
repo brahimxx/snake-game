@@ -1,7 +1,7 @@
 // board.js
 import { getDirection } from "./snake.js";
 
-export function updateGridSize(playBoard, minCells = 10, maxCells = 18) {
+export function updateGridSize(playBoard, minCells = 10, maxCells = 15) {
   const size = Math.min(window.innerWidth, window.innerHeight);
   const cells = Math.max(minCells, Math.min(maxCells, Math.floor(size / 20)));
   if (playBoard) {

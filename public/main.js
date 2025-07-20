@@ -1,7 +1,6 @@
-import { Snake } from "./snake.js";
+import { Snake, isOpposite } from "./snake.js"; // NOTE: Import isOpposite!
 import { randomFoodPosition } from "./food.js";
 import { updateGridSize, render } from "./board.js";
-// REMOVE: import { getHighestScore, setHighestScore } from "./storage.js";
 import { updateScoreDisplay } from "./utils.js";
 
 // --- Overlay/Menu Elements
@@ -39,39 +38,54 @@ let currentDifficulty = difficultySelect.options[
   .toLowerCase();
 
 // Sound setup
-const turnSound = new Audio("sounds/change_direction.wav");
 const hitSound = new Audio("sounds/hit.wav");
 const eatSound = new Audio("sounds/eat.wav");
 
-// ------------ High Score API helpers -------------
-// Use these instead of direct storage.js import
-async function fetchHighScore(difficulty) {
+// ------------ High Score Cache/Helpers -------------
+const highScoreCache = {}; // {easy: 10, medium: 23, ...}
+
+async function fetchAndCacheHighScore(difficulty) {
+  if (highScoreCache[difficulty] !== undefined) {
+    return highScoreCache[difficulty];
+  }
   const res = await fetch(`/api/highscore/${difficulty}`);
   const data = await res.json();
+  highScoreCache[difficulty] = data.score;
   return data.score;
 }
+
+function getCachedHighScore(difficulty) {
+  return highScoreCache[difficulty] ?? 0;
+}
+
 async function storeHighScore(score, difficulty) {
   await fetch(`/api/highscore/${difficulty}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ score }),
   });
+  highScoreCache[difficulty] = score; // update cache!
 }
-// -------------------------------------------------
 
-// ---- Helper
+// ---- Helper (update menu)
 async function updateMenuHighScore() {
-  highestScore = await fetchHighScore(currentDifficulty);
+  menuHighScoreLabel.textContent = "..."; // Indicate loading
+  highestScore = await fetchAndCacheHighScore(currentDifficulty);
   menuHighScoreLabel.textContent = highestScore;
 }
-updateMenuHighScore();
 
 // --- Initial overlays state
 gameMenu.classList.add("show");
 pauseOverlay.classList.remove("show");
 modal.classList.remove("show");
 
-// Async initializeGame must wait for API call
+// --- On page load, cache the current difficulty's score
+window.addEventListener("DOMContentLoaded", async () => {
+  highestScore = await fetchAndCacheHighScore(currentDifficulty);
+  menuHighScoreLabel.textContent = highestScore;
+});
+
+// --- Initialize Game
 async function initializeGame() {
   gridRows = gridCols = updateGridSize(playBoard);
   const startY = Math.floor(gridRows / 2);
@@ -79,9 +93,8 @@ async function initializeGame() {
   snake = new Snake(startY, startX);
   food = randomFoodPosition(gridRows, gridCols, snake.body);
 
-  // Always get correct score at start
   score = 0;
-  highestScore = await fetchHighScore(currentDifficulty);
+  highestScore = getCachedHighScore(currentDifficulty);
   updateScoreDisplay(score, highestScore);
   render(playBoard, snake, food);
 
@@ -101,6 +114,8 @@ startBtn.addEventListener("click", async () => {
   ].text
     .trim()
     .toLowerCase();
+  // Only fetch if not cached yet
+  highestScore = await fetchAndCacheHighScore(currentDifficulty);
   await initializeGame();
   isGameRunning = true;
 });
@@ -149,15 +164,6 @@ window.addEventListener("resize", () => {
   render(playBoard, snake, food);
 });
 
-function isOpposite(dir1, dir2) {
-  return (
-    (dir1 === "up" && dir2 === "down") ||
-    (dir1 === "down" && dir2 === "up") ||
-    (dir1 === "left" && dir2 === "right") ||
-    (dir1 === "right" && dir2 === "left")
-  );
-}
-
 // --- Keyboard Input
 document.addEventListener("keydown", (event) => {
   // Pause logic
@@ -196,26 +202,23 @@ document.addEventListener("keydown", (event) => {
       newDirection = "right";
       break;
   }
-  if (
-    newDirection &&
-    snake.direction !== newDirection &&
-    !isOpposite(snake.direction, newDirection)
-  ) {
-    snake.setDirection(newDirection);
-    turnSound.currentTime = 0;
-    turnSound.play();
+  if (newDirection) {
+    snake.setDirection(newDirection); // This now queues directions
   }
 });
 
 // ---- MAIN GAMELOOP
 async function gameLoop() {
+  if (snake.directionQueue && snake.directionQueue.length > 0) {
+    snake.direction = snake.directionQueue.shift();
+  }
   snake.move(gridRows, gridCols);
 
   // Self-collision
   if (snake.hasSelfCollision()) {
-    if (score > highestScore) {
+    if (score > getCachedHighScore(currentDifficulty)) {
       highestScore = score;
-      await storeHighScore(highestScore, currentDifficulty);
+      await storeHighScore(highestScore, currentDifficulty); // updates cache
     }
     hitSound.currentTime = 0;
     hitSound.play();
@@ -245,7 +248,7 @@ async function gameLoop() {
     snake.grow();
     food = randomFoodPosition(gridRows, gridCols, snake.body);
     score++;
-    updateScoreDisplay(score, highestScore);
+    updateScoreDisplay(score, getCachedHighScore(currentDifficulty));
   }
 
   render(playBoard, snake, food);

@@ -17,43 +17,95 @@
     <div class="main_div">
       <div class="score_div">
         <p class="current_score">Score : 0</p>
-        <p class="highest_score">Highest score : 0</p>
+        <div>
+          <img
+            src="/images/icons/ranking-svgrepo-com.svg"
+            alt="Highest score"
+            class="highest_score_icon"
+          />
+          <p class="highest_score">Highest score : 0</p>
+        </div>
       </div>
       <div class="game_board"></div>
     </div>
     <div id="gameOverModal" class="modal">
       <div class="modal-content">
-        <h2>Game Over</h2>
-        <button id="playAgainBtn">Play Again</button>
-        <button id="quitToMenuBtn_gameOver">Quit to Menu</button>
+        <h2 class="game_over_title">Game Over</h2>
+        <button id="playAgainBtn">
+          <img
+            src="/images/icons/play.svg"
+            alt="Play Again"
+            class="play_icon"
+          />
+          Play Again
+        </button>
+        <button id="quitToMenuBtn_gameOver">
+          <img
+            src="/images/icons/exit-svgrepo-com.svg"
+            alt="Quit to Menu"
+            class="quit_to_menu_icon"
+          />Quit to Menu
+        </button>
       </div>
     </div>
     <!-- Game Menu Overlay -->
     <div id="gameMenu" class="overlay show">
       <div class="menu-content">
-        <h1>Snake Game</h1>
+        <h1>
+          <img src="/images/head.png" alt="Snake Game Icon" class="menu_icon" />
+          Snake Game
+        </h1>
         <div>
-          <button id="startBtn">Start Game</button>
+          <button id="startBtn">
+            <img
+              src="/images/icons/play.svg"
+              alt="Play Again"
+              class="play_icon"
+            />
+            Start Game
+          </button>
         </div>
         <div>
-          <label>Difficulty:</label>
+          <label>Difficulty: </label>
           <select id="difficultySelect">
             <option value="150">Easy</option>
             <option value="100" selected>Normal</option>
             <option value="60">Hard</option>
           </select>
         </div>
-        <div>Highest Score: <span id="menuHighScoreLabel">0</span></div>
+        <div>
+          <img
+            src="/images/icons/ranking-svgrepo-com.svg"
+            alt="Highest score"
+            class="highest_score_icon"
+          />
+          Highest Score: <span id="menuHighScoreLabel">0</span>
+        </div>
       </div>
     </div>
 
     <!-- Pause Overlay -->
     <div id="pauseOverlay" class="overlay">
       <div class="pause-content">
-        <h2>Paused</h2>
+        <h2>
+          <img src="/images/icons/pause.svg" alt="Paused" class="pause_icon" />
+          Paused
+        </h2>
         <div>
-          <button id="resumeBtn">Resume</button>
-          <button id="quitToMenuBtn_pause">Quit to Menu</button>
+          <button id="resumeBtn">
+            <img
+              src="/images/icons/play.svg"
+              alt="Resume"
+              class="play_icon"
+            />Resume
+          </button>
+          <button id="quitToMenuBtn_pause">
+            <img
+              src="/images/icons/exit-svgrepo-com.svg"
+              alt="Quit to Menu"
+              class="quit_to_menu_icon"
+            />Quit to Menu
+          </button>
         </div>
       </div>
     </div>

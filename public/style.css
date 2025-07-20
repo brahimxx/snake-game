@@ -18,6 +18,12 @@ body {
   overflow: hidden;
 }
 
+.menu_icon {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: middle;
+  margin-right: 0.5em;
+}
 .main_div {
   display: flex;
   flex-direction: column;
@@ -35,7 +41,7 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  width: 720px;
+  width: 600px;
   background-color: rgb(57, 80, 66);
   border-radius: 10px 10px 0px 0px;
   border-style: solid;
@@ -43,49 +49,26 @@ body {
   border-color: rgb(57, 80, 66);
 }
 
-.score_div p {
-  margin-left: 40px;
-  margin-right: 40px;
+.highest_score {
+  padding: 0px 20px 0px 0px;
 }
-
+.current_score {
+  padding: 0px 0px 0px 20px;
+}
+.score_div div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .game_board {
   display: grid;
-  grid-template: repeat(30, 1fr) / repeat(30, 1fr);
-  width: 720px;
-  height: 720px;
+  width: 600px;
+  height: 600px;
   background-color: rgb(30, 47, 29);
   border-radius: 0px 0px 10px 10px;
   border-style: solid;
   border-width: 2px;
   border-color: rgb(57, 80, 66);
-}
-
-.foodcase {
-  background-image: url("images/food.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.head {
-  background-image: url("images/head.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.tail {
-  background-image: url("images/tale.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.body {
-  background-image: url("images/body.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 .modal {
@@ -96,13 +79,20 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: #222;
   justify-content: center;
   align-items: center;
 }
+
+.game_over_title {
+  font-size: 4rem;
+  color: #d82828;
+  margin-bottom: 1rem;
+  margin-bottom: 40px;
+}
 .modal-content {
-  background: #fff;
-  color: black;
+  background: #222;
+  color: rgb(255, 255, 255);
   padding: 2em 3em;
   border-radius: 8px;
   text-align: center;
@@ -154,41 +144,47 @@ body {
 }
 
 .head {
+  overflow: hidden;
   background-image: url("images/head.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .tail {
+  overflow: hidden;
   background-image: url("images/tail.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .vertical {
+  overflow: hidden;
   background-image: url("images/body_v.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 .horizontal {
+  overflow: hidden;
   background-image: url("images/body_h.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 .corner {
+  overflow: hidden;
   background-image: url("images/body-corner.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .foodcase {
+  overflow: hidden;
   background-image: url("images/food.png");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -223,6 +219,12 @@ body {
   width: 100%;
   height: 100%;
 }
+.menu-content h1 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 .pause-content div {
   display: flex;
 }
@@ -242,4 +244,14 @@ button:hover {
 select {
   font-size: 1rem;
   padding: 0.4em;
+}
+.highest_score_icon,
+.play_icon,
+.quit_to_menu_icon,
+.pause_icon {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: middle;
+  margin-right: 0.5em;
+  color: #f6f6f6;
 }

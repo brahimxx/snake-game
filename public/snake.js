@@ -1,17 +1,22 @@
 // snake.js
 import { updateGridSize } from "./board.js";
 
+// Utility: returns true if directions are opposites
+export function isOpposite(dir1, dir2) {
+  return (
+    (dir1 === "up" && dir2 === "down") ||
+    (dir1 === "down" && dir2 === "up") ||
+    (dir1 === "left" && dir2 === "right") ||
+    (dir1 === "right" && dir2 === "left")
+  );
+}
+
 export class SnakeSegment {
   constructor(y, x) {
     this.y = y;
     this.x = x;
   }
 }
-
-// By = 15  Ay = 16
-// Ay - By = -1
-// By = 18  Ay = 1
-// Ay - By = -17
 
 export function getDirection(segA, segB) {
   let gridRows = 0,
@@ -40,17 +45,18 @@ export class Snake {
   constructor(startY, startX) {
     this.body = [new SnakeSegment(startY, startX)];
     this.direction = null;
+    this.directionQueue = []; // NEW: Holds queued directions
   }
 
   setDirection(dir) {
-    if (
-      (dir === "up" && this.direction !== "down") ||
-      (dir === "down" && this.direction !== "up") ||
-      (dir === "left" && this.direction !== "right") ||
-      (dir === "right" && this.direction !== "left")
-    ) {
-      this.direction = dir;
-    }
+    // Use last queued or current direction for logic
+    const lastDir =
+      this.directionQueue.length > 0
+        ? this.directionQueue[this.directionQueue.length - 1]
+        : this.direction;
+    if (lastDir && isOpposite(lastDir, dir)) return; // Prevent U-turn
+    if (lastDir === dir) return; // Prevent duplicate
+    this.directionQueue.push(dir);
   }
 
   move(gridRows, gridCols) {
