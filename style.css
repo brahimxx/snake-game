@@ -6,11 +6,12 @@ body {
   padding: 0;
   overflow: hidden;
   box-sizing: border-box;
+  font-family: "Poppins", Arial, sans-serif;
 }
 
 body {
-  font-family: "Roboto";
-  color: white;
+  color: rgb(250, 249, 249);
+  background: #222;
   font-size: 22px;
   height: 100vh;
   width: 100vw;
@@ -34,11 +35,12 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  width: 90vw;
-  max-width: 700px;
-  background-color: rgb(57, 60, 80);
+  width: 720px;
+  background-color: rgb(57, 80, 66);
   border-radius: 10px 10px 0px 0px;
-  box-sizing: border-box;
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgb(57, 80, 66);
 }
 
 .score_div p {
@@ -49,10 +51,13 @@ body {
 .game_board {
   display: grid;
   grid-template: repeat(30, 1fr) / repeat(30, 1fr);
-  width: 700px;
-  height: 700px;
-  background-color: rgb(34, 36, 49);
+  width: 720px;
+  height: 720px;
+  background-color: rgb(30, 47, 29);
   border-radius: 0px 0px 10px 10px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgb(57, 80, 66);
 }
 
 .foodcase {
@@ -186,4 +191,55 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.overlay.show {
+  display: flex;
+}
+.menu-content,
+.pause-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+  background: #222;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  color: #f6f6f6;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+.pause-content div {
+  display: flex;
+}
+button {
+  padding: 0.8em 1.5em;
+  margin: 0.6em;
+  border: none;
+  background: #519872;
+  color: white;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+button:hover {
+  background: #36735c;
+  cursor: pointer;
+}
+select {
+  font-size: 1rem;
+  padding: 0.4em;
 }

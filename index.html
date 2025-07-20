@@ -2,6 +2,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="icon" type="image/x-icon" href="/images/head.png" />
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="main.js"></script>
@@ -19,6 +25,36 @@
       <div class="modal-content">
         <h2>Game Over</h2>
         <button id="playAgainBtn">Play Again</button>
+        <button id="quitToMenuBtn_gameOver">Quit to Menu</button>
+      </div>
+    </div>
+    <!-- Game Menu Overlay -->
+    <div id="gameMenu" class="overlay show">
+      <div class="menu-content">
+        <h1>Snake Game</h1>
+        <div>
+          <button id="startBtn">Start Game</button>
+        </div>
+        <div>
+          <label>Difficulty:</label>
+          <select id="difficultySelect">
+            <option value="150">Easy</option>
+            <option value="100" selected>Normal</option>
+            <option value="60">Hard</option>
+          </select>
+        </div>
+        <div>Highest Score: <span id="menuHighScoreLabel">0</span></div>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pauseOverlay" class="overlay">
+      <div class="pause-content">
+        <h2>Paused</h2>
+        <div>
+          <button id="resumeBtn">Resume</button>
+          <button id="quitToMenuBtn_pause">Quit to Menu</button>
+        </div>
       </div>
     </div>
   </body>
