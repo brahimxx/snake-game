@@ -1,38 +1,36 @@
-import { createClient } from "redis";
+import { Pool } from "pg";
 
-const client = createClient({ url: process.env.REDIS_URL });
-client.on("error", (err) => console.error("Redis client error:", err));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Neon gives you this URL
+  ssl: { rejectUnauthorized: false }, // required for Neon
+});
 
-let connection;
-async function getClient() {
-  if (!connection) {
-    connection = client.connect().then(() => client);
-  }
-  return connection;
-}
-
+// Get highest score
 export async function getHighestScore(difficulty = "normal") {
   try {
-    const cli = await getClient();
-    const key = `highscore:${difficulty}`;
-    const score = await cli.get(key);
-    return Number(score) || 0;
+    const { rows } = await pool.query(
+      "SELECT score FROM highscores WHERE difficulty = $1",
+      [difficulty]
+    );
+    return rows[0]?.score || 0;
   } catch (err) {
     console.error("getHighestScore error:", err);
     return 0;
   }
 }
 
+// Set highest score
 export async function setHighestScore(score, difficulty = "normal") {
   try {
-    const cli = await getClient();
-    const key = `highscore:${difficulty}`;
-    const current = Number(await cli.get(key)) || 0;
-    if (score > current) {
-      await cli.set(key, score);
-      return true;
-    }
-    return false;
+    const { rows } = await pool.query(
+      `INSERT INTO highscores (difficulty, score)
+       VALUES ($1, $2)
+       ON CONFLICT (difficulty)
+       DO UPDATE SET score = GREATEST(highscores.score, EXCLUDED.score)
+       RETURNING score`,
+      [difficulty, score]
+    );
+    return rows[0].score === score; // true if it's a new highscore
   } catch (err) {
     console.error("setHighestScore error:", err);
     return false;
