@@ -1,16 +1,19 @@
-import { Pool } from "pg";
+import mysql from "mysql2/promise";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Neon gives you this URL
-  ssl: { rejectUnauthorized: false }, // required for Neon
+// Create connection pool
+const pool = mysql.createPool({
+  uri: process.env.DATABASE_URL, // MySQL connection string
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
 // Get highest score
 export async function getHighestScore(difficulty = "normal") {
   try {
-    const { rows } = await pool.query(
-      "SELECT score FROM highscores WHERE difficulty = $1",
-      [difficulty]
+    const [rows] = await pool.query(
+      "SELECT score FROM highscores WHERE difficulty = ?",
+      [difficulty],
     );
     return rows[0]?.score || 0;
   } catch (err) {
@@ -22,15 +25,18 @@ export async function getHighestScore(difficulty = "normal") {
 // Set highest score
 export async function setHighestScore(score, difficulty = "normal") {
   try {
-    const { rows } = await pool.query(
+    await pool.query(
       `INSERT INTO highscores (difficulty, score)
-       VALUES ($1, $2)
-       ON CONFLICT (difficulty)
-       DO UPDATE SET score = GREATEST(highscores.score, EXCLUDED.score)
-       RETURNING score`,
-      [difficulty, score]
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE score = GREATEST(score, VALUES(score))`,
+      [difficulty, score],
     );
-    return rows[0].score === score; // true if it's a new highscore
+    // Check if it's the new high score
+    const [rows] = await pool.query(
+      "SELECT score FROM highscores WHERE difficulty = ?",
+      [difficulty],
+    );
+    return rows[0]?.score === score;
   } catch (err) {
     console.error("setHighestScore error:", err);
     return false;

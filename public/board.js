@@ -1,9 +1,22 @@
 // board.js
 import { getDirection } from "./snake.js";
 
-export function updateGridSize(playBoard, minCells = 10, maxCells = 15) {
+export const GRID_CONFIG = {
+  MIN_CELLS: 10,
+  MAX_CELLS: 15,
+  CELL_SIZE: 20,
+};
+
+export function updateGridSize(
+  playBoard,
+  minCells = GRID_CONFIG.MIN_CELLS,
+  maxCells = GRID_CONFIG.MAX_CELLS,
+) {
   const size = Math.min(window.innerWidth, window.innerHeight);
-  const cells = Math.max(minCells, Math.min(maxCells, Math.floor(size / 20)));
+  const cells = Math.max(
+    minCells,
+    Math.min(maxCells, Math.floor(size / GRID_CONFIG.CELL_SIZE)),
+  );
   if (playBoard) {
     playBoard.style.gridTemplateRows = `repeat(${cells}, 1fr)`;
     playBoard.style.gridTemplateColumns = `repeat(${cells}, 1fr)`;
@@ -12,18 +25,32 @@ export function updateGridSize(playBoard, minCells = 10, maxCells = 15) {
 }
 
 export function render(playBoard, snake, food) {
-  playBoard.innerHTML = `<div class="foodcase" style="grid-area: ${food.y} / ${food.x}"></div>`;
+  // Use DocumentFragment for better performance
+  const fragment = document.createDocumentFragment();
 
+  // Add food
+  const foodElement = document.createElement("div");
+  foodElement.className = "foodcase";
+  foodElement.style.gridArea = `${food.y} / ${food.x}`;
+  fragment.appendChild(foodElement);
+
+  // Get grid size from snake
+  const gridRows = snake.gridRows;
+  const gridCols = snake.gridCols;
+
+  // Add snake segments
   for (let i = 0; i < snake.body.length; i++) {
+    const segment = document.createElement("div");
     let className = "snakecase";
     let style = `grid-area: ${snake.body[i].y} / ${snake.body[i].x};`;
-    let segmentType = "";
 
     if (i === 0) {
       // HEAD
       className += " head";
       const next = snake.body[1];
-      const headDir = getDirection(snake.body[0], next) || snake.direction;
+      const headDir =
+        getDirection(snake.body[0], next, gridRows, gridCols) ||
+        snake.direction;
       style += getRotationStyle(headDir);
     } else if (i === snake.body.length - 1) {
       // TAIL
@@ -38,14 +65,17 @@ export function render(playBoard, snake, food) {
         if (curr.x === prev.x && curr.y === prev.y) {
           if (snake.body.length > 2) {
             // Use direction from 2nd-last to 3rd-last
-            tailDir = getDirection(snake.body[i - 2], prev) || snake.direction;
+            tailDir =
+              getDirection(snake.body[i - 2], prev, gridRows, gridCols) ||
+              snake.direction;
           } else {
             // Only two parts, fallback to snake.direction
             tailDir = snake.direction;
           }
         } else {
           // Standard case
-          tailDir = getDirection(prev, curr) || snake.direction;
+          tailDir =
+            getDirection(prev, curr, gridRows, gridCols) || snake.direction;
         }
       }
       style += getRotationStyle(tailDir);
@@ -53,10 +83,8 @@ export function render(playBoard, snake, food) {
       // BODY
       const prev = snake.body[i - 1];
       const next = snake.body[i + 1];
-      const from = getDirection(snake.body[i], next);
-      const to = getDirection(prev, snake.body[i]);
-
-      console.log("from:", from, "to:", to);
+      const from = getDirection(snake.body[i], next, gridRows, gridCols);
+      const to = getDirection(prev, snake.body[i], gridRows, gridCols);
 
       if (from && to && from === to) {
         if (from === "left" || from === "right") {
@@ -70,11 +98,16 @@ export function render(playBoard, snake, food) {
       }
     }
 
-    playBoard.innerHTML += `<div class="${className}" style="${style}"></div>`;
+    segment.className = className;
+    segment.style.cssText = style;
+    fragment.appendChild(segment);
   }
+
+  // Clear and update DOM once
+  playBoard.innerHTML = "";
+  playBoard.appendChild(fragment);
 }
 
-// Helper function to get rotation for head/tail
 function getRotationStyle(dir) {
   switch (dir) {
     case "up":

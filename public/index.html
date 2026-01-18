@@ -1,7 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Classic Snake Game - Play in your browser with touch and keyboard controls"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,60 +22,69 @@
     <title>Snake Game</title>
   </head>
   <body>
-    <div class="main_div">
+    <div class="main_div hidden">
       <div class="score_div">
-        <p class="current_score">Score : 0</p>
+        <p class="current_score">Score: 0</p>
+        <button id="soundToggle" class="sound-toggle" aria-label="Toggle sound">
+          🔊
+        </button>
         <div>
           <img
             src="/images/icons/ranking-svgrepo-com.svg"
-            alt="Highest score"
+            alt="High score"
             class="highest_score_icon"
           />
-          <p class="highest_score">Highest score : 0</p>
+          <p class="highest_score">High Score: 0</p>
         </div>
       </div>
-      <div class="game_board"></div>
+      <div
+        class="game_board"
+        role="application"
+        aria-label="Snake game board"
+      ></div>
     </div>
-    <div id="gameOverModal" class="modal">
+    <div
+      id="gameOverModal"
+      class="modal"
+      role="dialog"
+      aria-labelledby="gameOverTitle"
+    >
       <div class="modal-content">
-        <h2 class="game_over_title">Game Over</h2>
-        <button id="playAgainBtn">
-          <img
-            src="/images/icons/play.svg"
-            alt="Play Again"
-            class="play_icon"
-          />
+        <h2 id="gameOverTitle" class="game_over_title">Game Over</h2>
+        <button id="playAgainBtn" aria-label="Play the game again">
+          <img src="/images/icons/play.svg" alt="" class="play_icon" />
           Play Again
         </button>
-        <button id="quitToMenuBtn_gameOver">
+        <button id="quitToMenuBtn_gameOver" aria-label="Return to main menu">
           <img
             src="/images/icons/exit-svgrepo-com.svg"
-            alt="Quit to Menu"
+            alt=""
             class="quit_to_menu_icon"
           />Quit to Menu
         </button>
       </div>
     </div>
     <!-- Game Menu Overlay -->
-    <div id="gameMenu" class="overlay show">
+    <div
+      id="gameMenu"
+      class="overlay show"
+      role="dialog"
+      aria-labelledby="menuTitle"
+    >
       <div class="menu-content">
-        <h1>
-          <img src="/images/head.png" alt="Snake Game Icon" class="menu_icon" />
+        <h1 id="menuTitle">
+          <img src="/images/head.png" alt="" class="menu_icon" />
           Snake Game
         </h1>
         <div>
-          <button id="startBtn">
-            <img
-              src="/images/icons/play.svg"
-              alt="Play Again"
-              class="play_icon"
-            />
+          <button id="startBtn" aria-label="Start a new game">
+            <img src="/images/icons/play.svg" alt="" class="play_icon" />
             Start Game
           </button>
         </div>
         <div>
-          <label>Difficulty: </label>
-          <select id="difficultySelect">
+          <label for="difficultySelect">Difficulty: </label>
+          <select id="difficultySelect" aria-label="Select game difficulty">
             <option value="150">Easy</option>
             <option value="100" selected>Normal</option>
             <option value="60">Hard</option>
@@ -76,33 +93,40 @@
         <div>
           <img
             src="/images/icons/ranking-svgrepo-com.svg"
-            alt="Highest score"
+            alt=""
             class="highest_score_icon"
           />
-          Highest Score: <span id="menuHighScoreLabel">0</span>
+          High Score: <span id="menuHighScoreLabel" aria-live="polite">0</span>
+        </div>
+        <div class="controls-info">
+          <p><strong>Controls:</strong></p>
+          <p>🎮 Arrow Keys or WASD to move</p>
+          <p>📱 Swipe on touch devices</p>
+          <p>⏸️ ESC to pause/resume</p>
         </div>
       </div>
     </div>
 
     <!-- Pause Overlay -->
-    <div id="pauseOverlay" class="overlay">
+    <div
+      id="pauseOverlay"
+      class="overlay"
+      role="dialog"
+      aria-labelledby="pauseTitle"
+    >
       <div class="pause-content">
-        <h2>
-          <img src="/images/icons/pause.svg" alt="Paused" class="pause_icon" />
+        <h2 id="pauseTitle">
+          <img src="/images/icons/pause.svg" alt="" class="pause_icon" />
           Paused
         </h2>
         <div>
-          <button id="resumeBtn">
-            <img
-              src="/images/icons/play.svg"
-              alt="Resume"
-              class="play_icon"
-            />Resume
+          <button id="resumeBtn" aria-label="Resume the game">
+            <img src="/images/icons/play.svg" alt="" class="play_icon" />Resume
           </button>
-          <button id="quitToMenuBtn_pause">
+          <button id="quitToMenuBtn_pause" aria-label="Return to main menu">
             <img
               src="/images/icons/exit-svgrepo-com.svg"
-              alt="Quit to Menu"
+              alt=""
               class="quit_to_menu_icon"
             />Quit to Menu
           </button>
