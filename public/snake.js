@@ -109,6 +109,38 @@ export class Snake {
     this.growPending++;
   }
 
+  willCollideOnNextMove() {
+    if (!this.direction) return false;
+    
+    const { y, x } = this.body[0];
+    let newY = y;
+    let newX = x;
+
+    // Calculate next head position
+    switch (this.direction) {
+      case "up":
+        newY = y - 1 < 1 ? this.gridRows : y - 1;
+        break;
+      case "down":
+        newY = y + 1 > this.gridRows ? 1 : y + 1;
+        break;
+      case "left":
+        newX = x - 1 < 1 ? this.gridCols : x - 1;
+        break;
+      case "right":
+        newX = x + 1 > this.gridCols ? 1 : x + 1;
+        break;
+    }
+
+    // Check if next position collides with body
+    // When not growing, exclude the tail (last segment) since it will move away
+    const checkSegments = this.growPending > 0 
+      ? this.body.slice(1) // Check all body except head
+      : this.body.slice(1, -1); // Check all except head and tail
+    
+    return checkSegments.some((seg) => seg.x === newX && seg.y === newY);
+  }
+
   hasSelfCollision() {
     const [head, ...rest] = this.body;
     return rest.some((seg) => seg.x === head.x && seg.y === head.y);

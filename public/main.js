@@ -420,11 +420,8 @@ async function gameLoop() {
     snake.direction = snake.directionQueue.shift();
   }
 
-  // Move snake
-  snake.move();
-
-  // Check collision immediately after move
-  if (snake.hasSelfCollision()) {
+  // Check collision BEFORE moving - absolute prevention
+  if (snake.willCollideOnNextMove()) {
     if (score > getCachedHighScore(currentDifficulty)) {
       highestScore = score;
       await storeHighScore(highestScore, currentDifficulty);
@@ -447,6 +444,9 @@ async function gameLoop() {
     );
     return;
   }
+
+  // Move snake (safe to move now)
+  snake.move();
 
   // Eat food
   if (snake.body[0].x === food.x && snake.body[0].y === food.y) {
