@@ -94,19 +94,14 @@ export class Snake {
         break;
     }
 
-    // Move body (if growing, don't remove tail)
+    // Create new head
+    this.body.unshift(new SnakeSegment(newY, newX));
+
+    // Remove tail unless growing
     if (this.growPending > 0) {
-      // Add new head, keep tail (growth)
-      this.body.unshift(new SnakeSegment(newY, newX));
       this.growPending--;
     } else {
-      // Normal move: shift all segments
-      for (let i = this.body.length - 1; i > 0; i--) {
-        this.body[i].y = this.body[i - 1].y;
-        this.body[i].x = this.body[i - 1].x;
-      }
-      this.body[0].y = newY;
-      this.body[0].x = newX;
+      this.body.pop();
     }
   }
 

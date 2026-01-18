@@ -415,12 +415,15 @@ document.addEventListener("keydown", (event) => {
 
 // ---- MAIN GAMELOOP with progressive difficulty
 async function gameLoop() {
+  // Process direction queue
   if (snake.directionQueue && snake.directionQueue.length > 0) {
     snake.direction = snake.directionQueue.shift();
   }
+
+  // Move snake
   snake.move();
 
-  // Self-collision
+  // Check collision immediately after move
   if (snake.hasSelfCollision()) {
     if (score > getCachedHighScore(currentDifficulty)) {
       highestScore = score;
