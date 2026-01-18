@@ -111,7 +111,7 @@ export class Snake {
 
   willCollideOnNextMove() {
     if (!this.direction) return false;
-    
+
     const { y, x } = this.body[0];
     let newY = y;
     let newX = x;
@@ -134,10 +134,11 @@ export class Snake {
 
     // Check if next position collides with body
     // When not growing, exclude the tail (last segment) since it will move away
-    const checkSegments = this.growPending > 0 
-      ? this.body.slice(1) // Check all body except head
-      : this.body.slice(1, -1); // Check all except head and tail
-    
+    const checkSegments =
+      this.growPending > 0
+        ? this.body.slice(1) // Check all body except head
+        : this.body.slice(1, -1); // Check all except head and tail
+
     return checkSegments.some((seg) => seg.x === newX && seg.y === newY);
   }
 

@@ -57,7 +57,7 @@ let currentDifficulty = difficultySelect.options[
 
 // Sound setup
 const hitSound = new Audio("sounds/hit.wav");
-const eatSound = new Audio("sounds/eat.wav");
+const eatSound = new Audio("sounds/eat.mp3");
 let soundEnabled = loadSoundPreference();
 
 // Touch controls
