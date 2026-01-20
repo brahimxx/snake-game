@@ -23,12 +23,22 @@ Game available at `http://localhost:3000`
 
 ## Database Setup
 
-Create MySQL table:
+You can run the included setup script:
+
+```bash
+mysql -u username -p database < database_setup.sql
+```
+
+Or execute this SQL directly:
 
 ```sql
-CREATE TABLE highscores (
-  difficulty VARCHAR(20) PRIMARY KEY,
-  score INT NOT NULL
+CREATE TABLE leaderboard (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  player_name VARCHAR(50) NOT NULL,
+  score INT NOT NULL,
+  difficulty VARCHAR(20) NOT NULL,
+  device_type VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

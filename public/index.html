@@ -24,19 +24,33 @@
   <body>
     <div class="main_div hidden">
       <div class="score_div">
-        <p class="current_score">Score: 0</p>
-        <button id="soundToggle" class="sound-toggle" aria-label="Toggle sound">
-          🔊
-        </button>
-        <div>
+        <div class="score_item">
+          <img src="/images/icons/score.svg" alt="Score" class="score_icon" />
+          <p class="current_score">0</p>
+        </div>
+        
+        <div class="center_controls">
+            <button id="backToMenuBtn" class="control-btn" aria-label="Back to Menu">
+              <img src="/images/icons/menu.svg" alt="Menu" class="control-icon" />
+            </button>
+            
+            <button id="soundToggle" class="control-btn" aria-label="Toggle sound">
+              <img src="/images/icons/sound-on.svg" alt="Sound" id="soundIcon" class="control-icon" />
+            </button>
+        </div>
+
+        <div class="score_item" id="highScoreDiv">
           <img
             src="/images/icons/ranking-svgrepo-com.svg"
             alt="High score"
             class="highest_score_icon"
           />
-          <p class="highest_score">High Score: 0</p>
+          <p class="highest_score">0</p>
         </div>
       </div>
+      
+      <!-- Toast Notification -->
+      <div id="toast" class="toast hidden">Score Saved!</div>
       <div
         class="game_board"
         role="application"
@@ -51,17 +65,27 @@
     >
       <div class="modal-content">
         <h2 id="gameOverTitle" class="game_over_title">Game Over</h2>
-        <button id="playAgainBtn" aria-label="Play the game again">
-          <img src="/images/icons/play.svg" alt="" class="play_icon" />
-          Play Again
-        </button>
-        <button id="quitToMenuBtn_gameOver" aria-label="Return to main menu">
-          <img
-            src="/images/icons/exit-svgrepo-com.svg"
-            alt=""
-            class="quit_to_menu_icon"
-          />Quit to Menu
-        </button>
+        
+        <div id="newHighScoreSection" class="hidden">
+            <h3 class="new-record-text">🏆 New High Score! 🏆</h3>
+            <p>Enter your name to save your score:</p>
+            <input type="text" id="modalPlayerName" placeholder="Your Name" maxlength="15">
+            <button id="saveScoreBtn">Save Score</button>
+        </div>
+
+        <div class="modal-buttons">
+            <button id="playAgainBtn" aria-label="Play the game again">
+              <img src="/images/icons/play.svg" alt="" class="play_icon" />
+              Play Again
+            </button>
+            <button id="quitToMenuBtn_gameOver" aria-label="Return to main menu">
+              <img
+                src="/images/icons/exit-svgrepo-com.svg"
+                alt=""
+                class="quit_to_menu_icon"
+              />Quit to Menu
+            </button>
+        </div>
       </div>
     </div>
     <!-- Game Menu Overlay -->
@@ -82,28 +106,22 @@
             Start Game
           </button>
         </div>
-        <div>
-          <label for="difficultySelect">Difficulty: </label>
-          <select id="difficultySelect" aria-label="Select game difficulty">
-            <option value="150">Easy</option>
-            <option value="100" selected>Normal</option>
-            <option value="60">Hard</option>
-          </select>
+        <div class="difficulty-group">
+          <label>Difficulty:</label>
+          <div class="difficulty-buttons">
+            <button class="diff-btn" data-value="150" data-diff="easy">Easy</button>
+            <button class="diff-btn active" data-value="100" data-diff="normal">Normal</button>
+            <button class="diff-btn" data-value="60" data-diff="hard">Hard</button>
+          </div>
         </div>
-        <div>
-          <img
-            src="/images/icons/ranking-svgrepo-com.svg"
-            alt=""
-            class="highest_score_icon"
-          />
-          High Score: <span id="menuHighScoreLabel" aria-live="polite">0</span>
+        <div class="leaderboard-container">
+          <h3>Top 5 Leaders</h3>
+          <ul id="leaderboardList">
+            <!-- Leaderboard items will be injected here -->
+            <li>Loading...</li>
+          </ul>
         </div>
-        <div class="controls-info">
-          <p><strong>Controls:</strong></p>
-          <p>🎮 Arrow Keys or WASD to move</p>
-          <p>📱 Swipe on touch devices</p>
-          <p>⏸️ ESC to pause/resume</p>
-        </div>
+        
       </div>
     </div>
 

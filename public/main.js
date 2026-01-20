@@ -12,6 +12,7 @@ const GAME_CONFIG = {
 const STORAGE_KEYS = {
   HIGH_SCORES: "snake_game_high_scores",
   SOUND_ENABLED: "snake_game_sound_enabled",
+  PLAYER_NAME: "snake_game_player_name",
 };
 
 const GameState = {
@@ -23,8 +24,17 @@ const GameState = {
 
 const gameMenu = document.getElementById("gameMenu");
 const startBtn = document.getElementById("startBtn");
-const difficultySelect = document.getElementById("difficultySelect");
+const difficultyButtons = document.querySelectorAll(".diff-btn");
 const menuHighScoreLabel = document.getElementById("menuHighScoreLabel");
+const leaderboardList = document.getElementById("leaderboardList");
+const backToMenuBtn = document.getElementById("backToMenuBtn");
+const soundIcon = document.getElementById("soundIcon");
+const toast = document.getElementById("toast");
+
+// Modal Elements
+const modalPlayerName = document.getElementById("modalPlayerName");
+const saveScoreBtn = document.getElementById("saveScoreBtn");
+const newHighScoreSection = document.getElementById("newHighScoreSection");
 
 const pauseOverlay = document.getElementById("pauseOverlay");
 const resumeBtn = document.getElementById("resumeBtn");
@@ -40,25 +50,35 @@ const mainDiv = document.querySelector(".main_div");
 // Game state
 let gameState = GameState.MENU;
 let gameInterval = null;
-let intervalSpeed = parseInt(difficultySelect.value, 10);
-let baseIntervalSpeed = intervalSpeed; // Store initial speed
+let currentDifficulty = "normal"; // Default
+let intervalSpeed = 100; // Default normal speed
+let baseIntervalSpeed = intervalSpeed;
 let gridRows = 0;
 let gridCols = 0;
 let snake;
 let food;
 let score = 0;
 let highestScore = 0;
+let leaderboardTopScore = 0; // Track the #5 score to know if we qualify
+let leaderboardCount = 0; // Track number of entries
 
-let currentDifficulty = difficultySelect.options[
-  difficultySelect.selectedIndex
-].text
-  .trim()
-  .toLowerCase();
+// Device Detection
+// iPads on iOS 13+ pretend to be desktops (MacIntel) but have touch points.
+const isMobile =
+  "ontouchstart" in window ||
+  navigator.maxTouchPoints > 0 ||
+  navigator.msMaxTouchPoints > 0;
+const deviceType = isMobile ? "mobile" : "desktop";
+
 
 // Sound setup
 const hitSound = new Audio("sounds/hit.wav");
 const eatSound = new Audio("sounds/eat.mp3");
 let soundEnabled = loadSoundPreference();
+// Set initial icon state
+if (soundIcon) {
+    soundIcon.src = soundEnabled ? "/images/icons/sound-on.svg" : "/images/icons/sound-off.svg";
+}
 
 // Touch controls
 let touchStartX = 0;
@@ -86,87 +106,127 @@ function saveSoundPreference(enabled) {
   }
 }
 
-function getLocalHighScores() {
+const MAX_SCORES = 5;
+
+// Returns { [difficulty]: [ {name, score}, ... ] }
+function getAllLocalScores() {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.HIGH_SCORES);
-    return saved ? JSON.parse(saved) : {};
+    const parsed = saved ? JSON.parse(saved) : {};
+    // Migration: if strictly numbers (old format), reset or ignore
+    if (parsed.easy && typeof parsed.easy === 'number') return {}; 
+    return parsed;
   } catch (e) {
     return {};
   }
 }
 
-function saveLocalHighScore(difficulty, score) {
-  try {
-    const scores = getLocalHighScores();
-    scores[difficulty] = Math.max(scores[difficulty] || 0, score);
-    localStorage.setItem(STORAGE_KEYS.HIGH_SCORES, JSON.stringify(scores));
-  } catch (e) {
-    console.warn("Failed to save high score locally");
+function getLocalLeaderboardData(difficulty) {
+  const allScores = getAllLocalScores();
+  return allScores[difficulty] || [];
+}
+
+function saveLocalLeaderboardData(difficulty, name, score) {
+  const allScores = getAllLocalScores();
+  const list = allScores[difficulty] || [];
+  
+  list.push({ name, score });
+  // Sort desc
+  list.sort((a, b) => b.score - a.score);
+  // Keep top 5
+  if (list.length > MAX_SCORES) {
+    list.length = MAX_SCORES;
   }
+  
+  allScores[difficulty] = list;
+  localStorage.setItem(STORAGE_KEYS.HIGH_SCORES, JSON.stringify(allScores));
 }
 
 const highScoreCache = {};
 
-async function fetchAndCacheHighScore(difficulty) {
-  if (highScoreCache[difficulty] !== undefined) {
-    return highScoreCache[difficulty];
+async function fetchAndRenderLeaderboard(difficulty) {
+  leaderboardList.innerHTML = "<li>Loading...</li>";
+  
+  let leaderboard = [];
+  let isOffline = false;
+
+  try {
+    // Try API first
+    const res = await fetch(`/api/highscore/${difficulty}?deviceType=${deviceType}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    leaderboard = data.leaderboard || [];
+  } catch (error) {
+    console.warn("Leaderboard sync failed, using local storage:", error);
+    isOffline = true;
+    leaderboard = getLocalLeaderboardData(difficulty);
   }
 
-  // Show local data immediately for instant loading
-  const localScores = getLocalHighScores();
-  const localScore = localScores[difficulty] || 0;
-  highScoreCache[difficulty] = localScore;
+  // Render logic common for both API and Local
+  if (leaderboard.length > 0) {
+    leaderboardList.innerHTML = leaderboard
+      .map(
+        (entry, index) =>
+          `<li><span>#${index + 1} ${entry.name || entry.player_name || "Anonymous"}</span> <span>${entry.score}</span></li>`
+      )
+      .join("");
+      
+    // Update game logic variables
+    highestScore = leaderboard[0].score;
+    const lastEntry = leaderboard[leaderboard.length - 1];
+    leaderboardTopScore = leaderboard.length < MAX_SCORES ? 0 : lastEntry.score;
+    leaderboardCount = leaderboard.length;
+  } else {
+    leaderboardList.innerHTML = "<li>No scores yet</li>";
+    highestScore = 0;
+    leaderboardTopScore = 0;
+    leaderboardCount = 0;
+  }
 
-  // Then fetch from API in background to sync
-  fetch(`/api/highscore/${difficulty}`)
-    .then((res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then((data) => {
-      // Update if API has higher score
-      if (data.score > localScore) {
-        highScoreCache[difficulty] = data.score;
-        // Update display if we're on menu
-        if (gameState === GameState.MENU) {
-          menuHighScoreLabel.textContent = data.score;
-        }
-      }
-    })
-    .catch((error) => {
-      console.warn("API sync failed, using local score:", error);
-    });
-
-  return localScore;
+  return highestScore;
 }
 
 function getCachedHighScore(difficulty) {
   return highScoreCache[difficulty] ?? 0;
 }
 
-async function storeHighScore(score, difficulty) {
-  // Always save locally
-  saveLocalHighScore(difficulty, score);
+async function storeHighScore(score, difficulty, nameParam) {
+  const name = nameParam || "Anonymous";
+  
+  // Always save locally first (robustness)
+  saveLocalLeaderboardData(difficulty, name, score);
 
   // Try to save to API
   try {
     const res = await fetch(`/api/highscore/${difficulty}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score }),
+      body: JSON.stringify({ score, name, deviceType }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    highScoreCache[difficulty] = score;
   } catch (error) {
     console.warn("Failed to save high score to API:", error);
-    // Local storage already updated above
-    highScoreCache[difficulty] = score;
   }
+  
+  // Re-render (will use local if API failed)
+  await fetchAndRenderLeaderboard(difficulty);
 }
 
 async function updateMenuHighScore() {
-  highestScore = await fetchAndCacheHighScore(currentDifficulty);
-  menuHighScoreLabel.textContent = highestScore;
+  await fetchAndRenderLeaderboard(currentDifficulty);
+}
+
+function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+    toast.classList.add("show");
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.add("hidden");
+    }, 3000);
 }
 
 function playSound(sound) {
@@ -185,6 +245,12 @@ function setGameState(newState) {
   pauseOverlay.classList.toggle("show", newState === GameState.PAUSED);
   modal.classList.toggle("show", newState === GameState.GAME_OVER);
 
+  // Reset modal state when showing/hiding
+  if (newState !== GameState.GAME_OVER) {
+    newHighScoreSection.classList.add("hidden");
+    modalPlayerName.value = "";
+  }
+
   // Show/hide game board
   mainDiv.classList.toggle("hidden", newState === GameState.MENU);
 }
@@ -193,11 +259,23 @@ setGameState(GameState.MENU);
 
 // --- On page load
 window.addEventListener("DOMContentLoaded", async () => {
-  highestScore = await fetchAndCacheHighScore(currentDifficulty);
-  menuHighScoreLabel.textContent = highestScore;
+  // Load saved name
+  const savedName = localStorage.getItem(STORAGE_KEYS.PLAYER_NAME);
+  if (savedName) modalPlayerName.value = savedName;
+
+  await fetchAndRenderLeaderboard(currentDifficulty);
+  
   setupTouchControls();
   setupSoundToggle();
 });
+
+if (backToMenuBtn) {
+  backToMenuBtn.addEventListener("click", () => {
+    if (gameInterval) clearInterval(gameInterval);
+    setGameState(GameState.MENU);
+    updateMenuHighScore();
+  });
+}
 
 // --- Touch Controls Setup
 function setupTouchControls() {
@@ -271,14 +349,15 @@ function setupTouchControls() {
 
 // --- Sound Toggle Setup
 function setupSoundToggle() {
-  // Create sound toggle button (will be added to HTML)
   const soundToggle = document.getElementById("soundToggle");
   if (soundToggle) {
-    soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
     soundToggle.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
       saveSoundPreference(soundEnabled);
-      soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
+      // Update Icon
+      if (soundIcon) {
+        soundIcon.src = soundEnabled ? "/images/icons/sound-on.svg" : "/images/icons/sound-off.svg";
+      }
     });
   }
 }
@@ -292,9 +371,12 @@ async function initializeGame() {
   food = randomFoodPosition(gridRows, gridCols, snake.body);
 
   score = 0;
-  baseIntervalSpeed = parseInt(difficultySelect.value, 10);
+  // Map current difficulty string to speed
+  const speedMap = { easy: 150, normal: 100, hard: 60 };
+  baseIntervalSpeed = speedMap[currentDifficulty] || 100;
   intervalSpeed = baseIntervalSpeed;
-  highestScore = getCachedHighScore(currentDifficulty);
+
+  // highestScore is updated by fetchAndRenderLeaderboard already
   updateScoreDisplay(score, highestScore);
   render(playBoard, snake, food);
 
@@ -306,24 +388,20 @@ async function initializeGame() {
 // --- Event Listeners
 
 startBtn.addEventListener("click", async () => {
-  intervalSpeed = parseInt(difficultySelect.value, 10);
-  currentDifficulty = difficultySelect.options[
-    difficultySelect.selectedIndex
-  ].text
-    .trim()
-    .toLowerCase();
-  highestScore = await fetchAndCacheHighScore(currentDifficulty);
   await initializeGame();
 });
 
-difficultySelect.addEventListener("change", async (event) => {
-  intervalSpeed = parseInt(event.target.value, 10);
-  currentDifficulty = difficultySelect.options[
-    difficultySelect.selectedIndex
-  ].text
-    .trim()
-    .toLowerCase();
-  await updateMenuHighScore();
+difficultyButtons.forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    // UI Update
+    const clickedBtn = e.currentTarget; // Safer than target
+    difficultyButtons.forEach(b => b.classList.remove("active"));
+    clickedBtn.classList.add("active");
+    
+    // Logic Update
+    currentDifficulty = clickedBtn.dataset.diff;
+    await updateMenuHighScore();
+  });
 });
 
 playAgainBtn.addEventListener("click", async () => {
@@ -422,10 +500,13 @@ async function gameLoop() {
 
   // Check collision BEFORE moving - absolute prevention
   if (snake.willCollideOnNextMove()) {
-    if (score > getCachedHighScore(currentDifficulty)) {
-      highestScore = score;
-      await storeHighScore(highestScore, currentDifficulty);
-    }
+    // Check if score qualifies for high score (top 5) or is simply > 0 to encourage saving
+    // Check if score qualifies:
+    // 1. Must be > 0
+    // 2. AND (Leaderboard has < 5 slots filled OR Score beats the 5th place score)
+    const qualifies = score > 0 && (leaderboardCount < 5 || score > leaderboardTopScore);
+    
+    // Play sound immediately
     playSound(hitSound);
     if (gameInterval) clearInterval(gameInterval);
 
@@ -437,6 +518,23 @@ async function gameLoop() {
         gameMainDiv.classList.remove("shake");
         setTimeout(async () => {
           setGameState(GameState.GAME_OVER);
+          
+          if (qualifies && score > 0) {
+            newHighScoreSection.classList.remove("hidden");
+            modalPlayerName.focus();
+            
+            // Setup save handler for this specific game over instance
+            saveScoreBtn.onclick = async () => {
+                const name = modalPlayerName.value.trim() || "Anonymous";
+                localStorage.setItem(STORAGE_KEYS.PLAYER_NAME, name); // Save for next time
+                await storeHighScore(score, currentDifficulty, name);
+                saveScoreBtn.onclick = null; // Prevent double submit
+                showToast("Score Saved!");
+                newHighScoreSection.classList.add("hidden"); // Hide after save
+                await updateMenuHighScore();
+            };
+          }
+          
           await updateMenuHighScore();
         }, 300);
       },
@@ -454,7 +552,7 @@ async function gameLoop() {
     snake.grow();
     food = randomFoodPosition(gridRows, gridCols, snake.body);
     score++;
-    updateScoreDisplay(score, getCachedHighScore(currentDifficulty));
+    updateScoreDisplay(score, highestScore);
 
     // Progressive difficulty: increase speed slightly
     if (intervalSpeed > GAME_CONFIG.MIN_INTERVAL_SPEED) {
