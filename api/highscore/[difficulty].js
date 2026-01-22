@@ -1,4 +1,4 @@
-import { getLeaderboard, submitScore } from "../../storage.js";
+import { getLeaderboard, submitScore } from "../../db-wrapper.js";
 
 export default async function handler(req, res) {
   // Set timeout for slow database connections
