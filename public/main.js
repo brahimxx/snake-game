@@ -42,6 +42,7 @@ const quitToMenuBtnGameOver = document.getElementById("quitToMenuBtn_gameOver");
 const quitToMenuBtnPause = document.getElementById("quitToMenuBtn_pause");
 
 const modal = document.getElementById("gameOverModal");
+const finalScoreSpan = document.getElementById("finalScore");
 const playAgainBtn = document.getElementById("playAgainBtn");
 
 const playBoard = document.querySelector(".game_board");
@@ -61,6 +62,7 @@ let score = 0;
 let highestScore = 0;
 let leaderboardTopScore = 0; // Track the #5 score to know if we qualify
 let leaderboardCount = 0; // Track number of entries
+let currentLeaderboard = []; // Store current leaderboard data
 
 // Device Detection
 // iPads on iOS 13+ pretend to be desktops (MacIntel) but have touch points.
@@ -70,14 +72,15 @@ const isMobile =
   navigator.msMaxTouchPoints > 0;
 const deviceType = isMobile ? "mobile" : "desktop";
 
-
 // Sound setup
 const hitSound = new Audio("sounds/hit.wav");
 const eatSound = new Audio("sounds/eat.mp3");
 let soundEnabled = loadSoundPreference();
 // Set initial icon state
 if (soundIcon) {
-    soundIcon.src = soundEnabled ? "/images/icons/sound-on.svg" : "/images/icons/sound-off.svg";
+  soundIcon.src = soundEnabled
+    ? "/images/icons/sound-on.svg"
+    : "/images/icons/sound-off.svg";
 }
 
 // Touch controls
@@ -106,6 +109,20 @@ function saveSoundPreference(enabled) {
   }
 }
 
+function showToast(message) {
+  if (toast) {
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+    toast.classList.add("show");
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove("show");
+      // Don't add "hidden" class, let it fade out with opacity
+    }, 3000);
+  }
+}
+
 const MAX_SCORES = 5;
 
 // Returns { [difficulty]: [ {name, score}, ... ] }
@@ -114,7 +131,7 @@ function getAllLocalScores() {
     const saved = localStorage.getItem(STORAGE_KEYS.HIGH_SCORES);
     const parsed = saved ? JSON.parse(saved) : {};
     // Migration: if strictly numbers (old format), reset or ignore
-    if (parsed.easy && typeof parsed.easy === 'number') return {}; 
+    if (parsed.easy && typeof parsed.easy === "number") return {};
     return parsed;
   } catch (e) {
     return {};
@@ -129,7 +146,7 @@ function getLocalLeaderboardData(difficulty) {
 function saveLocalLeaderboardData(difficulty, name, score) {
   const allScores = getAllLocalScores();
   const list = allScores[difficulty] || [];
-  
+
   list.push({ name, score });
   // Sort desc
   list.sort((a, b) => b.score - a.score);
@@ -137,50 +154,115 @@ function saveLocalLeaderboardData(difficulty, name, score) {
   if (list.length > MAX_SCORES) {
     list.length = MAX_SCORES;
   }
-  
+
   allScores[difficulty] = list;
   localStorage.setItem(STORAGE_KEYS.HIGH_SCORES, JSON.stringify(allScores));
 }
 
 const highScoreCache = {};
+const CACHE_DURATION = 30000; // 30 seconds
+let lastFetchTime = {};
 
 async function fetchAndRenderLeaderboard(difficulty) {
-  leaderboardList.innerHTML = "<li>Loading...</li>";
-  
-  let leaderboard = [];
-  let isOffline = false;
+  const now = Date.now();
+  const cacheKey = `${difficulty}_${deviceType}`;
 
-  try {
-    // Try API first
-    const res = await fetch(`/api/highscore/${difficulty}?deviceType=${deviceType}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    leaderboard = data.leaderboard || [];
-  } catch (error) {
-    console.warn("Leaderboard sync failed, using local storage:", error);
-    isOffline = true;
-    leaderboard = getLocalLeaderboardData(difficulty);
+  // Use cached data if recent
+  if (
+    highScoreCache[cacheKey] &&
+    lastFetchTime[cacheKey] &&
+    now - lastFetchTime[cacheKey] < CACHE_DURATION
+  ) {
+    renderLeaderboard(highScoreCache[cacheKey]);
+    return highScoreCache[cacheKey][0]?.score || 0;
   }
 
+  // Show local data immediately, then update with fresh data
+  const localData = getLocalLeaderboardData(difficulty);
+  if (localData.length > 0) {
+    renderLeaderboard(localData);
+  } else {
+    showLeaderboardSkeleton();
+  }
+
+  // Fetch fresh data in background (non-blocking)
+  fetchFreshLeaderboardData(difficulty, cacheKey, now);
+
+  return localData[0]?.score || 0;
+}
+
+function showLeaderboardSkeleton() {
+  leaderboardList.innerHTML = Array.from({ length: 5 }, (_, index) => {
+    return `<li class="skeleton-item">
+      <div class="skeleton-rank"></div>
+      <div class="skeleton-name"></div>
+      <div class="skeleton-score"></div>
+    </li>`;
+  }).join("");
+}
+
+async function fetchFreshLeaderboardData(difficulty, cacheKey, startTime) {
+  try {
+    const fetchStart = Date.now();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+    const res = await fetch(
+      `/api/highscore/${difficulty}?deviceType=${deviceType}`,
+      { signal: controller.signal },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const leaderboard = data.leaderboard || [];
+
+    const fetchEnd = Date.now();
+
+    // Update cache
+    highScoreCache[cacheKey] = leaderboard;
+    lastFetchTime[cacheKey] = startTime;
+
+    // Update UI with fresh data
+    renderLeaderboard(leaderboard);
+  } catch (error) {
+    // Keep using local data - no need to show error to user
+  }
+}
+
+function renderLeaderboard(leaderboard) {
   // Render logic common for both API and Local
   if (leaderboard.length > 0) {
     leaderboardList.innerHTML = leaderboard
-      .map(
-        (entry, index) =>
-          `<li><span>#${index + 1} ${entry.name || entry.player_name || "Anonymous"}</span> <span>${entry.score}</span></li>`
-      )
+      .map((entry, index) => {
+        const playerName = entry.name || entry.player_name || "Anonymous";
+        const isIkrame = playerName.toLowerCase() === "ikrame";
+        const cssClass = isIkrame ? ' class="ikrame-special"' : '';
+        return `<li${cssClass}><span>#${index + 1} ${playerName}</span> <span>${entry.score}</span></li>`;
+      })
       .join("");
-      
+
     // Update game logic variables
     highestScore = leaderboard[0].score;
-    const lastEntry = leaderboard[leaderboard.length - 1];
-    leaderboardTopScore = leaderboard.length < MAX_SCORES ? 0 : lastEntry.score;
     leaderboardCount = leaderboard.length;
+    currentLeaderboard = [...leaderboard]; // Store copy of current leaderboard
+
+    // Set the minimum score needed to qualify for top 5
+    // If leaderboard has < 5 entries, any score > 0 qualifies
+    // If leaderboard has 5 entries, need to beat the 5th place score
+    if (leaderboardCount < MAX_SCORES) {
+      leaderboardTopScore = 0; // Any positive score qualifies
+    } else {
+      leaderboardTopScore = leaderboard[MAX_SCORES - 1].score; // 5th place score
+    }
   } else {
     leaderboardList.innerHTML = "<li>No scores yet</li>";
     highestScore = 0;
-    leaderboardTopScore = 0;
+    leaderboardTopScore = 0; // Any positive score qualifies when empty
     leaderboardCount = 0;
+    currentLeaderboard = []; // Empty leaderboard
   }
 
   return highestScore;
@@ -190,9 +272,13 @@ function getCachedHighScore(difficulty) {
   return highScoreCache[difficulty] ?? 0;
 }
 
+async function updateMenuHighScore() {
+  await fetchAndRenderLeaderboard(currentDifficulty);
+}
+
 async function storeHighScore(score, difficulty, nameParam) {
   const name = nameParam || "Anonymous";
-  
+
   // Always save locally first (robustness)
   saveLocalLeaderboardData(difficulty, name, score);
 
@@ -204,29 +290,20 @@ async function storeHighScore(score, difficulty, nameParam) {
       body: JSON.stringify({ score, name, deviceType }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Invalidate cache after successful save
+    const cacheKey = `${difficulty}_${deviceType}`;
+    delete highScoreCache[cacheKey];
+    delete lastFetchTime[cacheKey];
   } catch (error) {
     console.warn("Failed to save high score to API:", error);
   }
-  
-  // Re-render (will use local if API failed)
-  await fetchAndRenderLeaderboard(difficulty);
-}
 
-async function updateMenuHighScore() {
-  await fetchAndRenderLeaderboard(currentDifficulty);
-}
-
-function showToast(message) {
-    if (!toast) return;
-    toast.textContent = message;
-    toast.classList.remove("hidden");
-    toast.classList.add("show");
-    
-    // Hide after 3 seconds
-    setTimeout(() => {
-        toast.classList.remove("show");
-        toast.classList.add("hidden");
-    }, 3000);
+  // Re-render with fresh data
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.classList.add("hidden");
+  }, 3000);
 }
 
 function playSound(sound) {
@@ -264,7 +341,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (savedName) modalPlayerName.value = savedName;
 
   await fetchAndRenderLeaderboard(currentDifficulty);
-  
+
   setupTouchControls();
   setupSoundToggle();
 });
@@ -356,7 +433,9 @@ function setupSoundToggle() {
       saveSoundPreference(soundEnabled);
       // Update Icon
       if (soundIcon) {
-        soundIcon.src = soundEnabled ? "/images/icons/sound-on.svg" : "/images/icons/sound-off.svg";
+        soundIcon.src = soundEnabled
+          ? "/images/icons/sound-on.svg"
+          : "/images/icons/sound-off.svg";
       }
     });
   }
@@ -391,15 +470,22 @@ startBtn.addEventListener("click", async () => {
   await initializeGame();
 });
 
-difficultyButtons.forEach(btn => {
+difficultyButtons.forEach((btn) => {
   btn.addEventListener("click", async (e) => {
     // UI Update
     const clickedBtn = e.currentTarget; // Safer than target
-    difficultyButtons.forEach(b => b.classList.remove("active"));
+    difficultyButtons.forEach((b) => b.classList.remove("active"));
     clickedBtn.classList.add("active");
-    
+
     // Logic Update
-    currentDifficulty = clickedBtn.dataset.diff;
+    const newDifficulty = clickedBtn.dataset.diff;
+    currentDifficulty = newDifficulty;
+
+    // Clear cache for immediate update
+    const cacheKey = `${currentDifficulty}_${deviceType}`;
+    delete highScoreCache[cacheKey];
+    delete lastFetchTime[cacheKey];
+
     await updateMenuHighScore();
   });
 });
@@ -500,12 +586,6 @@ async function gameLoop() {
 
   // Check collision BEFORE moving - absolute prevention
   if (snake.willCollideOnNextMove()) {
-    // Check if score qualifies for high score (top 5) or is simply > 0 to encourage saving
-    // Check if score qualifies:
-    // 1. Must be > 0
-    // 2. AND (Leaderboard has < 5 slots filled OR Score beats the 5th place score)
-    const qualifies = score > 0 && (leaderboardCount < 5 || score > leaderboardTopScore);
-    
     // Play sound immediately
     playSound(hitSound);
     if (gameInterval) clearInterval(gameInterval);
@@ -518,23 +598,119 @@ async function gameLoop() {
         gameMainDiv.classList.remove("shake");
         setTimeout(async () => {
           setGameState(GameState.GAME_OVER);
-          
-          if (qualifies && score > 0) {
+
+          // Get fresh leaderboard data to check qualification
+          let currentLeaderboardData = [];
+          try {
+            const res = await fetch(
+              `/api/highscore/${currentDifficulty}?deviceType=${deviceType}`,
+            );
+            if (res.ok) {
+              const data = await res.json();
+              currentLeaderboardData = data.leaderboard || [];
+            } else {
+              currentLeaderboardData =
+                getLocalLeaderboardData(currentDifficulty);
+            }
+          } catch (error) {
+            currentLeaderboardData = getLocalLeaderboardData(currentDifficulty);
+          }
+
+          // Determine if score qualifies for high score (top 5)
+          // Only show "New High Score" if the score actually beats existing scores
+          let qualifies = false;
+
+          if (score > 0) {
+            if (currentLeaderboardData.length === 0) {
+              // Empty leaderboard - only qualify if score is decent (5+)
+              qualifies = score >= 5;
+            } else if (currentLeaderboardData.length < MAX_SCORES) {
+              // Leaderboard not full - any positive score qualifies
+              qualifies = true;
+            } else {
+              // Leaderboard is full - must beat the worst (last) score to qualify
+              const worstScore =
+                currentLeaderboardData[currentLeaderboardData.length - 1].score;
+              qualifies = score > worstScore;
+            }
+          } else {
+            // Score is 0, never qualifies
+            qualifies = false;
+          }
+
+          // Always show the final score
+          if (finalScoreSpan) {
+            finalScoreSpan.textContent = score;
+          }
+
+          // Update score status message
+          const scoreStatus = document.getElementById("scoreStatus");
+          if (scoreStatus) {
+            if (qualifies) {
+              scoreStatus.innerHTML =
+                '<span class="high-score-indicator">🎉 You made the top 5!</span>';
+              scoreStatus.className = "score-status success";
+            } else if (score === 0) {
+              scoreStatus.innerHTML =
+                '<span class="try-again-message">Try again to get on the leaderboard!</span>';
+              scoreStatus.className = "score-status neutral";
+            } else {
+              let neededScore = 5; // default minimum for empty leaderboard
+              if (currentLeaderboardData.length > 0) {
+                if (currentLeaderboardData.length < MAX_SCORES) {
+                  const worstExisting = Math.min(
+                    ...currentLeaderboardData.map((entry) => entry.score),
+                  );
+                  neededScore = worstExisting + 1;
+                } else {
+                  neededScore =
+                    currentLeaderboardData[MAX_SCORES - 1].score + 1;
+                }
+              }
+              scoreStatus.innerHTML = `<span class="score-needed">Need ${neededScore}+ points to make the top 5</span>`;
+              scoreStatus.className = "score-status info";
+            }
+          }
+
+          // Show/hide high score section based on qualification
+          // ALWAYS hide first, then conditionally show
+          newHighScoreSection.classList.add("hidden");
+
+          if (qualifies) {
             newHighScoreSection.classList.remove("hidden");
             modalPlayerName.focus();
-            
+
             // Setup save handler for this specific game over instance
             saveScoreBtn.onclick = async () => {
-                const name = modalPlayerName.value.trim() || "Anonymous";
-                localStorage.setItem(STORAGE_KEYS.PLAYER_NAME, name); // Save for next time
+              const name = modalPlayerName.value.trim() || "Anonymous";
+
+              // Show loading state
+              const originalText = saveScoreBtn.textContent;
+              saveScoreBtn.textContent = "Saving...";
+              saveScoreBtn.disabled = true;
+
+              localStorage.setItem(STORAGE_KEYS.PLAYER_NAME, name); // Save for next time
+
+              try {
                 await storeHighScore(score, currentDifficulty, name);
                 saveScoreBtn.onclick = null; // Prevent double submit
-                showToast("Score Saved!");
+                showToast("🎉 Score Saved Successfully!");
                 newHighScoreSection.classList.add("hidden"); // Hide after save
+                scoreStatus.innerHTML =
+                  '<span class="score-saved">✅ Score saved to leaderboard!</span>';
+                scoreStatus.className = "score-status success";
                 await updateMenuHighScore();
+              } catch (error) {
+                // Reset button on error
+                saveScoreBtn.textContent = originalText;
+                saveScoreBtn.disabled = false;
+                showToast("❌ Failed to save score. Try again.");
+              }
             };
+          } else {
+            newHighScoreSection.classList.add("hidden");
           }
-          
+
           await updateMenuHighScore();
         }, 300);
       },

@@ -1,5 +1,11 @@
 {
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "vercel": "npx vercel dev"
+  },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "mysql2": "^3.11.5"
   },
   "devDependencies": {
