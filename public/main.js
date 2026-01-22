@@ -239,7 +239,7 @@ function renderLeaderboard(leaderboard) {
       .map((entry, index) => {
         const playerName = entry.name || entry.player_name || "Anonymous";
         const isIkrame = playerName.toLowerCase() === "ikrame";
-        const cssClass = isIkrame ? ' class="ikrame-special"' : '';
+        const cssClass = isIkrame ? ' class="ikrame-special"' : "";
         return `<li${cssClass}><span>#${index + 1} ${playerName}</span> <span>${entry.score}</span></li>`;
       })
       .join("");

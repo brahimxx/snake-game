@@ -606,7 +606,7 @@ body {
 
 .head {
   overflow: hidden;
-  background-image: url("images/head.png");
+  background-image: url("images/head.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -614,7 +614,7 @@ body {
 
 .tail {
   overflow: hidden;
-  background-image: url("images/tail.png");
+  background-image: url("images/tail.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -622,21 +622,21 @@ body {
 
 .vertical {
   overflow: hidden;
-  background-image: url("images/body_v.png");
+  background-image: url("images/body_v.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 .horizontal {
   overflow: hidden;
-  background-image: url("images/body_h.png");
+  background-image: url("images/body_h.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 .corner {
   overflow: hidden;
-  background-image: url("images/body-corner.png");
+  background-image: url("images/body-corner.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -644,7 +644,7 @@ body {
 
 .foodcase {
   overflow: hidden;
-  background-image: url("images/food.png");
+  background-image: url("images/food.webp");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
