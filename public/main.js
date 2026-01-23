@@ -238,8 +238,8 @@ function renderLeaderboard(leaderboard) {
     leaderboardList.innerHTML = leaderboard
       .map((entry, index) => {
         const playerName = entry.name || entry.player_name || "Anonymous";
-        const isIkrame = playerName.toLowerCase() === "ikrame";
-        const cssClass = isIkrame ? ' class="ikrame-special"' : "";
+        const isAnsala = playerName.toLowerCase() === "ansala";
+        const cssClass = isAnsala ? ' class="ansala-special"' : "";
         return `<li${cssClass}><span>#${index + 1} ${playerName}</span> <span>${entry.score}</span></li>`;
       })
       .join("");
